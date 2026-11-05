@@ -47,18 +47,24 @@ function baseNode(ctx: UnionResolverContext): Chain {
 
   if (discriminatedData) {
     if (!shouldFallBackToUnion({ childResults, parentSchema, plugin, schemas })) {
-      const unionMembers = discriminatedData.members.map((member) => {
+      const seenRefs = new Set<string>();
+      const unionMembers = discriminatedData.members.flatMap((member) => {
         const refExpr = $(plugin.referenceSymbol(ZodContracts.definition(member.ref)));
-        return member.needsExtend
-          ? refExpr
-              .attr(identifiers.extend)
-              .call(
-                $.object().prop(
-                  discriminatedData.discriminatorKey,
-                  $(z).attr(identifiers.literal).call($.fromValue(member.discriminatedValue)),
-                ),
-              )
-          : refExpr;
+        if (!member.needsExtend) {
+          if (seenRefs.has(member.ref)) return [];
+          seenRefs.add(member.ref);
+          return [refExpr];
+        }
+        return [
+          refExpr
+            .attr(identifiers.extend)
+            .call(
+              $.object().prop(
+                discriminatedData.discriminatorKey,
+                $(z).attr(identifiers.literal).call($.fromValue(member.discriminatedValue)),
+              ),
+            ),
+        ];
       });
 
       return $(z)
@@ -79,22 +85,28 @@ function baseNode(ctx: UnionResolverContext): Chain {
       }
     }
 
-    const unionMembers = discriminatedData.members.map((member) => {
+    const seenRefs = new Set<string>();
+    const unionMembers = discriminatedData.members.flatMap((member) => {
       const childChain = refToChildChain.get(member.ref)!;
-      return member.needsExtend
-        ? $(z)
-            .attr(identifiers.object)
-            .call(
-              $.object()
-                .pretty()
-                .prop(
-                  discriminatedData.discriminatorKey,
-                  $(z).attr(identifiers.literal).call($.fromValue(member.discriminatedValue)),
-                ),
-            )
-            .attr(identifiers.and)
-            .call(childChain)
-        : childChain;
+      if (!member.needsExtend) {
+        if (seenRefs.has(member.ref)) return [];
+        seenRefs.add(member.ref);
+        return [childChain];
+      }
+      return [
+        $(z)
+          .attr(identifiers.object)
+          .call(
+            $.object()
+              .pretty()
+              .prop(
+                discriminatedData.discriminatorKey,
+                $(z).attr(identifiers.literal).call($.fromValue(member.discriminatedValue)),
+              ),
+          )
+          .attr(identifiers.and)
+          .call(childChain),
+      ];
     });
 
     return $(z)

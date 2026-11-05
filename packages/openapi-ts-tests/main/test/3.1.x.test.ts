@@ -233,6 +233,14 @@ describe(`OpenAPI ${version}`, () => {
     },
     {
       config: createConfig({
+        input: 'discriminator-branch-values.yaml',
+        output: 'discriminator-branch-values',
+      }),
+      description:
+        'uses a branch enum or const when it conflicts with the implicit discriminator name',
+    },
+    {
+      config: createConfig({
         input: 'discriminator-allof-nested.json',
         output: 'discriminator-allof-nested',
       }),

@@ -50,10 +50,16 @@ function baseNode(ctx: UnionResolverContext): PipeResult {
         }
       }
 
-      const memberNodes = discriminatedData.members.map((member) => {
+      const seenRefs = new Set<string>();
+      const memberNodes = discriminatedData.members.flatMap((member) => {
         const childNode = refToNode.get(member.ref)!;
-        if (member.needsExtend) {
-          return $(v)
+        if (!member.needsExtend) {
+          if (seenRefs.has(member.ref)) return [];
+          seenRefs.add(member.ref);
+          return [childNode];
+        }
+        return [
+          $(v)
             .attr(identifiers.schemas.intersect)
             .call(
               $.array(
@@ -71,9 +77,8 @@ function baseNode(ctx: UnionResolverContext): PipeResult {
                   ),
                 childNode,
               ),
-            );
-        }
-        return childNode;
+            ),
+        ];
       });
 
       return $(v)

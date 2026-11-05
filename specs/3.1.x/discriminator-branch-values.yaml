@@ -1,0 +1,67 @@
+openapi: 3.1.0
+info:
+  title: Discriminator values taken from the branch when they conflict with the schema name
+  version: '1'
+components:
+  schemas:
+    Cat:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [cat]
+        meow:
+          type: boolean
+    Dog:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          const: dog
+        bark:
+          type: boolean
+    Bird:
+      allOf:
+        - type: object
+          required: [type]
+          properties:
+            type:
+              type: string
+              enum: [bird, avian]
+            wings:
+              type: boolean
+    Named:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [Named, named]
+        extra:
+          type: boolean
+    Other:
+      type: object
+      properties:
+        type:
+          type: string
+        note:
+          type: string
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+        - $ref: '#/components/schemas/Bird'
+        - $ref: '#/components/schemas/Named'
+        - $ref: '#/components/schemas/Other'
+      discriminator:
+        propertyName: type
+    Mapped:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+      discriminator:
+        propertyName: type
+        mapping:
+          cat: '#/components/schemas/Cat'
+          dog: '#/components/schemas/Dog'
