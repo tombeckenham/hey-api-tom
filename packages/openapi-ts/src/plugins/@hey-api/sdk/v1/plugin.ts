@@ -17,15 +17,18 @@ export const handlerV1: HeyApiSdkPlugin['Handler'] = ({ plugin }) => {
   plugin.forEach(
     'operation',
     (event) => {
-      structure.insert({
-        data: {
-          operation: event.operation,
-          path: event._path,
-          tags: event.tags,
-        } satisfies OperationItem,
-        locations: strategy(event.operation).map((path) => ({ path, shell })),
-        source,
-      });
+      for (const operation of [event.operation, event.operation.sse]) {
+        if (!operation) continue;
+        structure.insert({
+          data: {
+            operation,
+            path: event._path,
+            tags: event.tags,
+          } satisfies OperationItem,
+          locations: strategy(operation).map((path) => ({ path, shell })),
+          source,
+        });
+      }
     },
     { order: 'declarations' },
   );

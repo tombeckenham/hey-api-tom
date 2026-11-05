@@ -33,6 +33,12 @@ export interface IROperationObject extends SpecExtensions {
   responses?: IRResponsesObject;
   security?: ReadonlyArray<IRSecurityObject>;
   servers?: ReadonlyArray<IRServerObject>;
+  /**
+   * Server-Sent Events variant of this operation. Set when a response offers
+   * `text/event-stream` alongside the preferred media type (usually JSON).
+   * It has its own `id` and its responses use the event stream schemas.
+   */
+  sse?: IROperationObject;
   summary?: string;
   tags?: ReadonlyArray<string>;
 }

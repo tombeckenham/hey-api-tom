@@ -1,0 +1,54 @@
+openapi: 3.1.0
+info:
+  title: JSON or SSE test
+  version: 1.0.0
+paths:
+  /chat:
+    post:
+      operationId: chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stream:
+                  type: boolean
+      responses:
+        '200':
+          description: JSON, or SSE when stream is true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Completion'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/Chunk'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Chunk:
+      type: object
+      required:
+        - delta
+      properties:
+        delta:
+          type: string
+    Completion:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+    Error:
+      type: object
+      properties:
+        message:
+          type: string

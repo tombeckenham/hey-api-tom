@@ -28,13 +28,16 @@ export const handlerV1: HeyApiTypeScriptPlugin['Handler'] = ({ plugin }) => {
     (event) => {
       switch (event.type) {
         case 'operation':
-          operationToType({
-            operation: event.operation,
-            path: event._path,
-            plugin,
-            processor,
-            tags: event.tags,
-          });
+          for (const operation of [event.operation, event.operation.sse]) {
+            if (!operation) continue;
+            operationToType({
+              operation,
+              path: event._path,
+              plugin,
+              processor,
+              tags: event.tags,
+            });
+          }
           break;
         case 'parameter':
           processor.process({

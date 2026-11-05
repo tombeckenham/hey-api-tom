@@ -981,6 +981,14 @@ describe(`OpenAPI ${version}`, () => {
     },
     {
       config: createConfig({
+        input: 'sse-json.yaml',
+        output: 'sse-json-fetch',
+        plugins: ['@hey-api/client-fetch', '@hey-api/sdk'],
+      }),
+      description: 'response with both JSON and SSE generates an SSE variant',
+    },
+    {
+      config: createConfig({
         input: 'opencode.yaml',
         output: 'sse-fetch',
         parser: {

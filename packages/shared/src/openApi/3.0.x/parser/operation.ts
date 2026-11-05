@@ -3,7 +3,7 @@ import type { OpenAPIV3 } from '@hey-api/spec-types';
 import type { Context } from '../../../ir/context';
 import type { IR } from '../../../ir/types';
 import type { State } from '../../../openApi/shared/types/state';
-import { operationToId } from '../../../openApi/shared/utils/operation';
+import { addSseVariant, operationToId } from '../../../openApi/shared/utils/operation';
 import { contentToSchema, mediaTypeObjects } from './mediaType';
 import { paginationField } from './pagination';
 import { parseExtensions, schemaToIrSchema } from './schema';
@@ -164,6 +164,8 @@ function operationToIrOperation({
     }
   }
 
+  const sseResponses: Record<string, IR.ResponseObject> = {};
+
   for (const name in operation.responses) {
     if (name.startsWith('x-')) continue;
 
@@ -179,6 +181,23 @@ function operationToIrOperation({
     const contents = mediaTypeObjects({ content: responseObject.content });
     // TODO: add support for multiple content types, for now prefer JSON
     const content = contents.find((content) => content.type === 'json') || contents[0];
+    const sseContent = contents.find(
+      (item) => item !== content && item.mediaType === 'text/event-stream',
+    );
+
+    if (sseContent) {
+      sseResponses[name] = {
+        mediaType: sseContent.mediaType,
+        schema: schemaToIrSchema({
+          context,
+          schema: {
+            description: responseObject.description,
+            ...contentToSchema({ content: sseContent }),
+          },
+          state: undefined,
+        }),
+      };
+    }
 
     if (content) {
       irOperation.responses[name] = {
@@ -229,6 +248,8 @@ function operationToIrOperation({
 
   // TODO: parser - handle servers
   // qux: operation.servers
+
+  addSseVariant({ context, irOperation, responses: sseResponses, state });
 
   return irOperation;
 }

@@ -1,5 +1,6 @@
 import type { Context } from '../../../ir/context';
 import { createOperationKey } from '../../../ir/operation';
+import type { IR } from '../../../ir/types';
 import { toCase } from '../../../utils/naming/naming';
 import type { State } from '../types/state';
 
@@ -108,4 +109,38 @@ export function operationToId({
   state.ids.set(result, createOperationKey({ method, path }));
 
   return result;
+}
+
+/**
+ * Attaches a Server-Sent Events variant to the operation when any of its
+ * responses offers `text/event-stream` alongside the preferred media type.
+ * The variant keeps everything else and swaps in the event stream responses.
+ */
+export function addSseVariant({
+  context,
+  irOperation,
+  responses,
+  state,
+}: {
+  context: Context;
+  irOperation: IR.OperationObject;
+  responses: Record<string, IR.ResponseObject>;
+  state: Pick<State, 'ids'>;
+}): void {
+  if (!Object.keys(responses).length) return;
+
+  const operationId = irOperation.operationId ? `${irOperation.operationId}Sse` : undefined;
+
+  irOperation.sse = {
+    ...irOperation,
+    id: operationToId({
+      context,
+      id: operationId,
+      method: irOperation.method,
+      path: `${irOperation.path}-sse`,
+      state,
+    }),
+    ...(operationId && { operationId }),
+    responses: { ...irOperation.responses, ...responses },
+  };
 }
